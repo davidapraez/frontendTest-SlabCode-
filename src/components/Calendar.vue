@@ -10,62 +10,173 @@
           <div v-for="reminder in getReminders(day.date)" :key="reminder.id">
             {{ reminder.text }}
           </div>
-          <button v-if="day.date !== 0" @click="addTestReminder(day.date)">
+          <a-button
+            v-if="day.date !== 0"
+            type="primary"
+            @click="openAddReminderModal(day.date)"
+          >
             Add Reminder
-          </button>
+          </a-button>
         </div>
       </div>
     </div>
     <div class="controls">
-      <button @click="addTestReminder(randomDate())">
-        Add Random Test Reminder
-      </button>
+      <a-button type="primary" @click="openAddReminderModal"
+        >Add New Reminder</a-button
+      >
     </div>
+
+    <a-modal
+      v-model:visible="isModalOpen"
+      title="Add New Reminder"
+      @ok="addNewReminder"
+      @cancel="closeAddReminderModal"
+    >
+      <a-form @submit.prevent="addNewReminder">
+        <a-form-item label="Date" required>
+          <a-date-picker v-model:value="newReminder.date" />
+        </a-form-item>
+        <a-form-item label="Time" required>
+          <a-time-picker v-model:value="newReminder.time" format="HH:mm" />
+        </a-form-item>
+        <a-form-item label="Reminder (max 30 chars)" required>
+          <a-input v-model:value="newReminder.text" maxlength="30" />
+        </a-form-item>
+        <a-form-item label="City" required>
+          <a-input v-model:value="newReminder.city" />
+        </a-form-item>
+        <a-form-item label="Color" required>
+          <input type="color" v-model="newReminder.color" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import { useCalendar } from "../hooks/useCalendar";
+import { defineComponent, ref } from "vue";
+import { useReminderStore } from "../store/reminderStore";
 import { Reminder } from "../types/Reminder";
 
+import {
+  DatePicker,
+  TimePicker,
+  Button,
+  Modal,
+  Form,
+  FormItem,
+  Input,
+} from "ant-design-vue";
+
 export default defineComponent({
+  components: {
+    "a-date-picker": DatePicker,
+    "a-time-picker": TimePicker,
+    "a-button": Button,
+    "a-modal": Modal,
+    "a-form": Form,
+    "a-form-item": FormItem,
+    "a-input": Input,
+  },
   setup() {
-    const { days, weeks, reminders, addReminder, deleteReminder } =
-      useCalendar();
+    const reminderStore = useReminderStore();
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const weeks = ref(generateWeeks());
+
+    const isModalOpen = ref(false);
+    const newReminder = ref({
+      date: null,
+      time: null,
+      text: "",
+      city: "",
+      color: "#000000", // Añadir color por defecto
+    });
 
     function getReminders(date: number): Reminder[] {
-      if (date === 0) return []; // No mostrar recordatorios en días vacíos
-      return reminders.value.filter(
-        (reminder: Reminder) => reminder.date === date
-      );
+      if (date === 0) return [];
+      return reminderStore.getRemindersByDate(date);
     }
 
-    function addTestReminder(date: number) {
-      const newReminder: Reminder = {
+    function openAddReminderModal(date?: number) {
+      if (date) {
+        newReminder.value.date = new Date(
+          new Date().getFullYear(),
+          new Date().getMonth(),
+          date
+        );
+      } else {
+        newReminder.value.date = new Date(); // Configura la fecha actual por defecto
+      }
+      isModalOpen.value = true;
+    }
+
+    function closeAddReminderModal() {
+      isModalOpen.value = false;
+    }
+
+    function addNewReminder() {
+      const reminderDate = newReminder.value.date;
+      const reminderTime = newReminder.value.time;
+      const date = new Date(
+        reminderDate.getFullYear(),
+        reminderDate.getMonth(),
+        reminderDate.getDate(),
+        reminderTime.getHours(),
+        reminderTime.getMinutes()
+      ).getTime();
+
+      const newReminderObj: Reminder = {
         id: Math.random(),
-        text: "Test Reminder",
-        date: date,
-        city: "Test City",
+        text: newReminder.value.text,
+        date,
+        city: newReminder.value.city,
+        color: newReminder.value.color,
       };
-      addReminder(newReminder);
-    }
 
-    function randomDate(): number {
-      return Math.floor(Math.random() * 31) + 1;
+      reminderStore.addReminder(newReminderObj);
+      closeAddReminderModal();
     }
 
     return {
       days,
       weeks,
       getReminders,
-      addReminder,
-      deleteReminder,
-      addTestReminder,
-      randomDate,
+      addNewReminder,
+      openAddReminderModal,
+      closeAddReminderModal,
+      isModalOpen,
+      newReminder,
     };
   },
 });
+
+function generateWeeks() {
+  const weeks = [];
+  let currentDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  let endDay = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+
+  while (currentDay <= endDay) {
+    let week = [];
+    for (let i = 0; i < 7; i++) {
+      if (currentDay.getMonth() === new Date().getMonth()) {
+        week.push({ date: currentDay.getDate() });
+      } else {
+        week.push({ date: 0 });
+      }
+      currentDay.setDate(currentDay.getDate() + 1);
+    }
+    weeks.push(week);
+  }
+  return weeks;
+}
 </script>
 
 <style scoped>
@@ -95,6 +206,7 @@ export default defineComponent({
   border: 1px solid #ddd;
   padding: 10px;
   text-align: center;
+  position: relative;
 }
 .controls {
   margin-top: 20px;
