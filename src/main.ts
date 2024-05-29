@@ -2,9 +2,9 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import { createPinia } from "pinia";
 import moment from "moment";
-import "moment/locale/es"; // Ajusta el locale según tu preferencia
+import "moment/locale/es";
 
-moment.locale("es"); // Configura el locale globalmente
+moment.locale("es");
 
 const app = createApp(App);
 const pinia = createPinia();

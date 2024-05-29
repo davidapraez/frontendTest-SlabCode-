@@ -51,7 +51,6 @@
           {{ isEditing ? "Update Reminder" : "Add Reminder" }}
         </button>
       </form>
-      <button @click="debugState">Debug State</button>
     </div>
   </div>
 </template>
@@ -100,6 +99,7 @@ export default defineComponent({
 
       try {
         const weather = await getWeather(newReminder.value.city.toLowerCase());
+        console.log("Weather Data:", weather); // Log del dato del clima
         weatherData.value = weather;
         newReminder.value.weatherDescription = weather.weather[0].description;
         newReminder.value.temperature = weather.main.temp.toString(); // Convertir a string
@@ -140,6 +140,7 @@ export default defineComponent({
         temperature: newReminder.value.temperature,
       };
 
+      console.log("New Reminder:", newReminderObj); // Log del nuevo recordatorio
       reminderStore.addReminder(newReminderObj);
       notification.success({
         message: "Success",
@@ -213,14 +214,6 @@ export default defineComponent({
       weatherData.value = null;
     }
 
-    function debugState() {
-      console.log({
-        newReminder: newReminder.value,
-        weatherData: weatherData.value,
-        remindersForDate: remindersForDate.value,
-      });
-    }
-
     return {
       newReminder,
       remindersForDate,
@@ -231,7 +224,6 @@ export default defineComponent({
       isEditing,
       fetchWeather,
       weatherData,
-      debugState,
     };
   },
 });
