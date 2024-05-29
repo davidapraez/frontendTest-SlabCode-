@@ -1,7 +1,9 @@
 <template>
   <div class="reminder-form">
     <h3>
-      {{ selectedDate ? `Reminders for ${selectedDate}` : "Select a Date" }}
+      {{
+        selectedDate ? `Reminders for the day ${selectedDate}` : "Select a Date"
+      }}
     </h3>
     <div v-if="selectedDate">
       <ul class="reminder-list">
@@ -64,22 +66,22 @@ import { message, notification } from "ant-design-vue";
 export default defineComponent({
   props: {
     selectedDate: {
-      type: Number,
+      type: Number as PropType<number | null>, // Permitir null
       required: true,
     },
   },
   setup(props) {
     const reminderStore = useReminderStore();
-    const weatherData = ref<WeatherResponse | null>(null);
+    const weatherData = ref<any>(null); // Usar any
 
     const isEditing = ref(false);
     const editingReminderId = ref<number | null>(null);
 
-    const newReminder = ref({
+    const newReminder = ref<any>({
       time: "",
       text: "",
       city: "",
-      color: "#000000", // Default color
+      color: "#000000",
       weatherDescription: "",
       temperature: "",
     });
@@ -97,12 +99,15 @@ export default defineComponent({
       }
 
       try {
-        const weather = await getWeather(newReminder.value.city);
+        const weather = await getWeather(newReminder.value.city.toLowerCase());
         weatherData.value = weather;
         newReminder.value.weatherDescription = weather.weather[0].description;
-        newReminder.value.temperature = weather.main.temp;
+        newReminder.value.temperature = weather.main.temp.toString(); // Convertir a string
       } catch (error) {
-        message.error("Error fetching weather data");
+        notification.error({
+          message: "Error",
+          description: "City not found. Please enter a valid city name.",
+        });
       }
     }
 
@@ -120,7 +125,7 @@ export default defineComponent({
       const date = new Date(
         new Date().getFullYear(),
         new Date().getMonth(),
-        props.selectedDate,
+        props.selectedDate as number,
         hours,
         minutes
       ).getTime();
@@ -163,7 +168,7 @@ export default defineComponent({
       const date = new Date(
         new Date().getFullYear(),
         new Date().getMonth(),
-        props.selectedDate,
+        props.selectedDate as number,
         hours,
         minutes
       ).getTime();
@@ -232,16 +237,4 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
-.color-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-right: 5px;
-}
-.reminder-list {
-  list-style-type: none;
-  padding: 0;
-}
-</style>
+<style scoped src="../styles/reminderForm.css"></style>

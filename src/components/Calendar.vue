@@ -90,48 +90,4 @@ function generateWeeks() {
 }
 </script>
 
-<style scoped>
-.calendar {
-  width: 100%;
-}
-.header {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  background-color: #3f51b5;
-  color: white;
-}
-.day {
-  padding: 10px;
-  text-align: center;
-}
-.body {
-  display: grid;
-  grid-template-rows: repeat(6, 1fr);
-}
-.week {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-}
-.date {
-  border: 1px solid #ddd;
-  padding: 10px;
-  text-align: center;
-  position: relative;
-}
-.color-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-right: 5px;
-}
-.reminders-list {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-}
-.reminder-item {
-  display: flex;
-  align-items: center;
-}
-</style>
+<style scoped src="../styles/calendar.css"></style>

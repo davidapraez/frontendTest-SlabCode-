@@ -50,26 +50,4 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
-.calendar-with-reminder-form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px;
-}
-.calendar-container,
-.reminder-form-container {
-  width: 100%;
-  margin-bottom: 20px;
-}
-@media (min-width: 768px) {
-  .calendar-with-reminder-form {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .calendar-container,
-  .reminder-form-container {
-    width: 100%;
-  }
-}
-</style>
+<style scoped src="../styles/calendarWithReminderForm.css"></style>
