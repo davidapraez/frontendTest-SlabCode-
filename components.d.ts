@@ -16,6 +16,7 @@ declare module 'vue' {
     AModal: typeof import('ant-design-vue/es')['Modal']
     ATimePicker: typeof import('ant-design-vue/es')['TimePicker']
     Calendar: typeof import('./src/components/Calendar.vue')['default']
+    CalendarWithReminderForm: typeof import('./src/components/CalendarWithReminderForm.vue')['default']
     ReminderForm: typeof import('./src/components/ReminderForm.vue')['default']
     ReminderModal: typeof import('./src/components/ReminderModal.vue')['default']
   }

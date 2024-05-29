@@ -9,7 +9,7 @@
           v-for="day in week"
           :key="day.date"
           class="date"
-          @click="openAddReminderModal(day.date)"
+          @click="selectDate(day.date)"
         >
           {{ day.date !== 0 ? day.date : "" }}
           <ul v-if="day.date !== 0" class="reminders-list">
@@ -28,13 +28,6 @@
         </div>
       </div>
     </div>
-    <div class="controls">
-      <a-button type="primary" @click="openAddReminderModal"
-        >Add New Reminder</a-button
-      >
-    </div>
-
-    <ReminderForm :selected-date="selectedDate" v-if="isFormVisible" />
   </div>
 </template>
 
@@ -42,15 +35,9 @@
 import { defineComponent, ref } from "vue";
 import { useReminderStore } from "../store/reminderStore";
 import { Reminder } from "../types/Reminder";
-import ReminderForm from "./ReminderForm.vue";
-import { Button } from "ant-design-vue";
 
 export default defineComponent({
-  components: {
-    "a-button": Button,
-    ReminderForm,
-  },
-  setup() {
+  setup(_, { emit }) {
     const reminderStore = useReminderStore();
     const days = [
       "Sunday",
@@ -63,25 +50,21 @@ export default defineComponent({
     ];
     const weeks = ref(generateWeeks());
 
-    const selectedDate = ref<number | null>(null);
-    const isFormVisible = ref(false);
-
     function getReminders(date: number): Reminder[] {
       return reminderStore.getRemindersByDate(date);
     }
 
-    function openAddReminderModal(date?: number) {
-      selectedDate.value = date || new Date().getDate();
-      isFormVisible.value = true;
+    function selectDate(date: number) {
+      if (date !== 0) {
+        emit("select-date", date);
+      }
     }
 
     return {
       days,
       weeks,
       getReminders,
-      openAddReminderModal,
-      selectedDate,
-      isFormVisible,
+      selectDate,
     };
   },
 });
@@ -109,8 +92,7 @@ function generateWeeks() {
 
 <style scoped>
 .calendar {
-  display: grid;
-  grid-template-rows: auto 1fr;
+  width: 100%;
 }
 .header {
   display: grid;
@@ -135,10 +117,6 @@ function generateWeeks() {
   padding: 10px;
   text-align: center;
   position: relative;
-}
-.controls {
-  margin-top: 20px;
-  text-align: center;
 }
 .color-dot {
   display: inline-block;

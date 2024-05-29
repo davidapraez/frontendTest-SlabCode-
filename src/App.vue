@@ -1,11 +1,11 @@
 <template>
   <div id="app">
-    <Calendar />
+    <CalendarWithReminderForm />
   </div>
 </template>
 
 <script>
-import Calendar from "./components/Calendar.vue";
+import Calendar from "./components/CalendarWithReminderForm.vue";
 
 export default {
   name: "App",
