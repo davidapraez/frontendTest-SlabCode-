@@ -10,7 +10,9 @@
             :style="{ backgroundColor: reminder.color }"
             class="color-dot"
           ></span>
-          {{ reminder.text }}
+          {{ reminder.text }} - {{ reminder.weatherDescription }} ({{
+            reminder.temperature
+          }}°C)
           <button @click="editReminder(reminder)">Edit</button>
           <button @click="deleteReminder(reminder.id)">Delete</button>
         </li>
@@ -32,7 +34,12 @@
         </label>
         <label>
           City:
-          <input type="text" v-model="newReminder.city" required />
+          <input
+            type="text"
+            v-model="newReminder.city"
+            @change="fetchWeather"
+            required
+          />
         </label>
         <label>
           Color:
@@ -42,6 +49,7 @@
           {{ isEditing ? "Update Reminder" : "Add Reminder" }}
         </button>
       </form>
+      <button @click="debugState">Debug State</button>
     </div>
   </div>
 </template>
@@ -50,6 +58,7 @@
 import { defineComponent, ref, computed, PropType } from "vue";
 import { useReminderStore } from "../store/reminderStore";
 import { Reminder } from "../types/Reminder";
+import { getWeather } from "../services/weatherService";
 import { message, notification } from "ant-design-vue";
 
 export default defineComponent({
@@ -61,6 +70,7 @@ export default defineComponent({
   },
   setup(props) {
     const reminderStore = useReminderStore();
+    const weatherData = ref<WeatherResponse | null>(null);
 
     const isEditing = ref(false);
     const editingReminderId = ref<number | null>(null);
@@ -70,6 +80,8 @@ export default defineComponent({
       text: "",
       city: "",
       color: "#000000", // Default color
+      weatherDescription: "",
+      temperature: "",
     });
 
     const remindersForDate = computed(() => {
@@ -77,6 +89,22 @@ export default defineComponent({
         (reminder) => new Date(reminder.date).getDate() === props.selectedDate
       );
     });
+
+    async function fetchWeather() {
+      if (!newReminder.value.city.trim()) {
+        message.error("City cannot be empty");
+        return;
+      }
+
+      try {
+        const weather = await getWeather(newReminder.value.city);
+        weatherData.value = weather;
+        newReminder.value.weatherDescription = weather.weather[0].description;
+        newReminder.value.temperature = weather.main.temp;
+      } catch (error) {
+        message.error("Error fetching weather data");
+      }
+    }
 
     function addNewReminder() {
       if (!newReminder.value.text.trim()) {
@@ -103,6 +131,8 @@ export default defineComponent({
         date,
         city: newReminder.value.city,
         color: newReminder.value.color,
+        weatherDescription: newReminder.value.weatherDescription,
+        temperature: newReminder.value.temperature,
       };
 
       reminderStore.addReminder(newReminderObj);
@@ -121,6 +151,8 @@ export default defineComponent({
         text: reminder.text,
         city: reminder.city,
         color: reminder.color,
+        weatherDescription: reminder.weatherDescription,
+        temperature: reminder.temperature,
       };
     }
 
@@ -142,6 +174,8 @@ export default defineComponent({
         date,
         city: newReminder.value.city,
         color: newReminder.value.color,
+        weatherDescription: newReminder.value.weatherDescription,
+        temperature: newReminder.value.temperature,
       };
 
       reminderStore.updateReminder(updatedReminder);
@@ -163,7 +197,23 @@ export default defineComponent({
     function resetForm() {
       isEditing.value = false;
       editingReminderId.value = null;
-      newReminder.value = { time: "", text: "", city: "", color: "#000000" };
+      newReminder.value = {
+        time: "",
+        text: "",
+        city: "",
+        color: "#000000",
+        weatherDescription: "",
+        temperature: "",
+      };
+      weatherData.value = null;
+    }
+
+    function debugState() {
+      console.log({
+        newReminder: newReminder.value,
+        weatherData: weatherData.value,
+        remindersForDate: remindersForDate.value,
+      });
     }
 
     return {
@@ -174,6 +224,9 @@ export default defineComponent({
       updateReminder,
       deleteReminder,
       isEditing,
+      fetchWeather,
+      weatherData,
+      debugState,
     };
   },
 });
