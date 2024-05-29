@@ -21,6 +21,14 @@ export const useReminderStore = defineStore("reminder", {
     addReminder(reminder: Reminder) {
       this.reminders.push(reminder);
     },
+    updateReminder(updatedReminder: Reminder) {
+      const index = this.reminders.findIndex(
+        (reminder) => reminder.id === updatedReminder.id
+      );
+      if (index !== -1) {
+        this.reminders[index] = updatedReminder;
+      }
+    },
     deleteReminder(reminderId: number) {
       this.reminders = this.reminders.filter(
         (reminder) => reminder.id !== reminderId

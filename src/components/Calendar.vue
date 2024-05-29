@@ -1,82 +1,52 @@
 <template>
-  <div class="calendar">
-    <div class="header">
-      <div v-for="day in days" :key="day" class="day">{{ day }}</div>
-    </div>
-    <div class="body">
-      <div v-for="(week, weekIndex) in weeks" :key="weekIndex" class="week">
-        <div v-for="day in week" :key="day.date" class="date">
-          <span v-if="day.date !== 0">{{ day.date }}</span>
-          <div v-for="reminder in getReminders(day.date)" :key="reminder.id">
-            {{ reminder.text }}
-          </div>
-          <a-button
-            v-if="day.date !== 0"
-            type="primary"
-            @click="openAddReminderModal(day.date)"
+  <div class="calendar-container">
+    <div class="calendar">
+      <div class="header">
+        <div v-for="day in days" :key="day" class="day">{{ day }}</div>
+      </div>
+      <div class="body">
+        <div v-for="(week, index) in weeks" :key="index" class="week">
+          <div
+            v-for="day in week"
+            :key="day.date"
+            class="date"
+            @click="selectDate(day.date)"
           >
-            Add Reminder
-          </a-button>
+            <div>{{ day.date }}</div>
+            <div v-if="getReminders(day.date).length" class="reminders">
+              <div
+                v-for="reminder in getReminders(day.date)"
+                :key="reminder.id"
+                class="reminder"
+              >
+                <span
+                  :style="{ backgroundColor: reminder.color }"
+                  class="color-dot"
+                ></span>
+                {{ reminder.text }}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="controls">
-      <a-button type="primary" @click="openAddReminderModal"
-        >Add New Reminder</a-button
-      >
-    </div>
 
-    <a-modal
-      v-model:visible="isModalOpen"
-      title="Add New Reminder"
-      @ok="addNewReminder"
-      @cancel="closeAddReminderModal"
-    >
-      <a-form @submit.prevent="addNewReminder">
-        <a-form-item label="Date" required>
-          <a-date-picker v-model:value="newReminder.date" />
-        </a-form-item>
-        <a-form-item label="Time" required>
-          <a-time-picker v-model:value="newReminder.time" format="HH:mm" />
-        </a-form-item>
-        <a-form-item label="Reminder (max 30 chars)" required>
-          <a-input v-model:value="newReminder.text" maxlength="30" />
-        </a-form-item>
-        <a-form-item label="City" required>
-          <a-input v-model:value="newReminder.city" />
-        </a-form-item>
-        <a-form-item label="Color" required>
-          <input type="color" v-model="newReminder.color" />
-        </a-form-item>
-      </a-form>
-    </a-modal>
+    <ReminderForm :selectedDate="selectedDate" />
   </div>
 </template>
-
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, computed } from "vue";
 import { useReminderStore } from "../store/reminderStore";
 import { Reminder } from "../types/Reminder";
+import dayjs from "dayjs";
+import "dayjs/locale/es";
+import ReminderForm from "./ReminderForm.vue";
 
-import {
-  DatePicker,
-  TimePicker,
-  Button,
-  Modal,
-  Form,
-  FormItem,
-  Input,
-} from "ant-design-vue";
+dayjs.locale("es");
 
 export default defineComponent({
   components: {
-    "a-date-picker": DatePicker,
-    "a-time-picker": TimePicker,
-    "a-button": Button,
-    "a-modal": Modal,
-    "a-form": Form,
-    "a-form-item": FormItem,
-    "a-input": Input,
+    ReminderForm,
   },
   setup() {
     const reminderStore = useReminderStore();
@@ -91,98 +61,63 @@ export default defineComponent({
     ];
     const weeks = ref(generateWeeks());
 
-    const isModalOpen = ref(false);
-    const newReminder = ref({
-      date: null,
-      time: null,
-      text: "",
-      city: "",
-      color: "#000000", // Añadir color por defecto
-    });
+    const selectedDate = ref<number | null>(null);
+
+    const reminders = computed(() => reminderStore.reminders);
 
     function getReminders(date: number): Reminder[] {
-      if (date === 0) return [];
-      return reminderStore.getRemindersByDate(date);
+      if (!date) return [];
+      return reminders.value.filter(
+        (reminder) =>
+          dayjs(reminder.date).date() === date &&
+          dayjs(reminder.date).month() === dayjs().month() &&
+          dayjs(reminder.date).year() === dayjs().year()
+      );
     }
 
-    function openAddReminderModal(date?: number) {
-      if (date) {
-        newReminder.value.date = new Date(
-          new Date().getFullYear(),
-          new Date().getMonth(),
-          date
-        );
-      } else {
-        newReminder.value.date = new Date(); // Configura la fecha actual por defecto
-      }
-      isModalOpen.value = true;
-    }
-
-    function closeAddReminderModal() {
-      isModalOpen.value = false;
-    }
-
-    function addNewReminder() {
-      const reminderDate = newReminder.value.date;
-      const reminderTime = newReminder.value.time;
-      const date = new Date(
-        reminderDate.getFullYear(),
-        reminderDate.getMonth(),
-        reminderDate.getDate(),
-        reminderTime.getHours(),
-        reminderTime.getMinutes()
-      ).getTime();
-
-      const newReminderObj: Reminder = {
-        id: Math.random(),
-        text: newReminder.value.text,
-        date,
-        city: newReminder.value.city,
-        color: newReminder.value.color,
-      };
-
-      reminderStore.addReminder(newReminderObj);
-      closeAddReminderModal();
+    function selectDate(date: number) {
+      selectedDate.value = date;
     }
 
     return {
       days,
       weeks,
+      selectedDate,
       getReminders,
-      addNewReminder,
-      openAddReminderModal,
-      closeAddReminderModal,
-      isModalOpen,
-      newReminder,
+      selectDate,
     };
   },
 });
 
 function generateWeeks() {
   const weeks = [];
-  let currentDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-  let endDay = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+  let currentDay = dayjs().startOf("month").toDate();
+  let endDay = dayjs().endOf("month").toDate();
 
   while (currentDay <= endDay) {
     let week = [];
     for (let i = 0; i < 7; i++) {
-      if (currentDay.getMonth() === new Date().getMonth()) {
-        week.push({ date: currentDay.getDate() });
+      if (dayjs(currentDay).month() === dayjs().month()) {
+        week.push({ date: dayjs(currentDay).date() });
       } else {
         week.push({ date: 0 });
       }
-      currentDay.setDate(currentDay.getDate() + 1);
+      currentDay = dayjs(currentDay).add(1, "day").toDate();
     }
     weeks.push(week);
   }
   return weeks;
 }
 </script>
-
 <style scoped>
+.calendar-container {
+  display: flex;
+}
 .calendar {
+  flex: 2;
   display: grid;
   grid-template-rows: auto 1fr;
+  overflow: hidden; /* Evita el desbordamiento */
 }
 .header {
   display: grid;
@@ -197,6 +132,7 @@ function generateWeeks() {
 .body {
   display: grid;
   grid-template-rows: repeat(6, 1fr);
+  overflow-y: auto;
 }
 .week {
   display: grid;
@@ -208,8 +144,18 @@ function generateWeeks() {
   text-align: center;
   position: relative;
 }
-.controls {
-  margin-top: 20px;
-  text-align: center;
+.reminders {
+  margin-top: 5px;
+}
+.reminder {
+  display: flex;
+  align-items: center;
+  margin: 2px 0;
+}
+.color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
 }
 </style>
