@@ -4,7 +4,7 @@
       {{ selectedDate ? `Reminders for ${selectedDate}` : "Select a Date" }}
     </h3>
     <div v-if="selectedDate">
-      <ul>
+      <ul class="reminder-list">
         <li v-for="reminder in remindersForDate" :key="reminder.id">
           <span
             :style="{ backgroundColor: reminder.color }"
@@ -45,10 +45,12 @@
     </div>
   </div>
 </template>
+
 <script lang="ts">
 import { defineComponent, ref, computed, PropType } from "vue";
 import { useReminderStore } from "../store/reminderStore";
 import { Reminder } from "../types/Reminder";
+import { message, notification } from "ant-design-vue";
 
 export default defineComponent({
   props: {
@@ -78,11 +80,11 @@ export default defineComponent({
 
     function addNewReminder() {
       if (!newReminder.value.text.trim()) {
-        alert("Reminder text cannot be empty");
+        message.error("Reminder text cannot be empty");
         return;
       }
       if (!newReminder.value.city.trim()) {
-        alert("City cannot be empty");
+        message.error("City cannot be empty");
         return;
       }
 
@@ -104,6 +106,10 @@ export default defineComponent({
       };
 
       reminderStore.addReminder(newReminderObj);
+      notification.success({
+        message: "Success",
+        description: "Reminder added successfully",
+      });
       resetForm();
     }
 
@@ -139,11 +145,19 @@ export default defineComponent({
       };
 
       reminderStore.updateReminder(updatedReminder);
+      notification.info({
+        message: "Updated",
+        description: "Reminder updated successfully",
+      });
       resetForm();
     }
 
     function deleteReminder(id: number) {
       reminderStore.deleteReminder(id);
+      notification.error({
+        message: "Deleted",
+        description: "Reminder deleted successfully",
+      });
     }
 
     function resetForm() {
@@ -164,31 +178,17 @@ export default defineComponent({
   },
 });
 </script>
+
 <style scoped>
-.reminder-form {
-  padding: 20px;
-  background-color: #f5f5f5;
-  border-left: 1px solid #ddd;
-  overflow-y: auto; /* Agrega scroll vertical si es necesario */
-}
-.reminder-form h3,
-.reminder-form h4 {
-  margin-bottom: 10px;
-}
-.reminder-form form {
-  display: flex;
-  flex-direction: column;
-}
-.reminder-form form label {
-  margin-bottom: 10px;
-}
-.reminder-form form button {
-  align-self: flex-start;
-}
 .color-dot {
+  display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 50%;
   margin-right: 5px;
+}
+.reminder-list {
+  list-style-type: none;
+  padding: 0;
 }
 </style>
